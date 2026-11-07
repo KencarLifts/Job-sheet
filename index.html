@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Job Sheets</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#f3f5fb;--card:#fff;--tx:#14192b;--mu:#5d6580;--bd:#cfd5e8;--pr:#1f3fae;--prt:#fff;--rd:#c62828;--ok:#2e7d32;color-scheme:light dark}
+@media(prefers-color-scheme:dark){:root{--bg:#10131f;--card:#1a1f31;--tx:#eef0f8;--mu:#9aa3c0;--bd:#343b57;--pr:#5b7bff;--rd:#ff6b6b;--ok:#6fcf74}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:17px/1.4 system-ui,-apple-system,Arial,sans-serif;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))}
+main{max-width:820px;margin:0 auto}
+h1{font-size:20px;margin:6px 0 4px}
+#bar{display:flex;justify-content:space-between;gap:8px;align-items:center;color:var(--mu);font-size:14px;margin-bottom:10px}
+#bar button{width:auto;margin:0;padding:6px 12px;min-height:36px;font-size:14px}
+nav{display:flex;gap:6px;margin-bottom:12px}
+nav button{margin:0;padding:10px 4px;min-height:44px;background:var(--card);color:var(--tx);border:1px solid var(--bd);font-size:15px}
+nav button.on{background:var(--pr);color:var(--prt);border-color:var(--pr)}
+.steps{display:flex;gap:6px;margin-bottom:12px}
+.steps div{flex:1;text-align:center;padding:8px 4px;border-radius:10px;background:var(--card);color:var(--mu);font-size:14px;border:1px solid var(--bd)}
+.steps .on{background:var(--pr);color:#fff;border-color:var(--pr)}
+.v,.st,.top{display:none}.v.on,.st.on,.top.on{display:block}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+h2{font-size:16px;margin:16px 0 8px;color:var(--pr)}h2:first-child{margin-top:0}
+label{display:block;font-size:14px;color:var(--mu);margin:10px 0 4px}
+input,textarea,select{width:100%;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:12px;min-height:48px}
+textarea{resize:none;overflow:hidden}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g>div>label:first-child{margin-top:0}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg label{margin:0;flex:1;min-width:90px}
+.seg span{display:block;text-align:center;padding:13px 6px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font-size:16px}
+.seg input{position:absolute;opacity:0;width:1px;min-height:0}
+.seg input:checked+span{background:var(--pr);color:#fff;border-color:var(--pr)}
+.row{display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:8px;align-items:start}
+button{font:inherit;border:0;border-radius:12px;padding:14px 18px;min-height:52px;background:var(--pr);color:#fff;font-weight:600;width:100%;margin-top:14px;cursor:pointer}
+button:disabled{opacity:.5}
+button.s{background:var(--bg);color:var(--tx);border:1px solid var(--bd);margin-top:8px}
+button.d{color:var(--rd)}
+.nav{display:flex;gap:10px}.nav button{flex:1}
+.pad{border:2px dashed var(--bd);border-radius:12px;background:#fff;touch-action:none;width:100%;height:auto;display:block}
+.tot{text-align:right;color:var(--mu);margin-top:6px}
+#pv{width:100%;border:1px solid var(--bd);border-radius:8px;background:#fff}
+.m{color:var(--mu);font-size:14px;margin:8px 0 0}.er{color:var(--rd)}
+.it{display:flex;flex-direction:column;gap:6px}.it b{font-size:18px}.it small{color:var(--mu)}
+.ab{display:flex;gap:6px;flex-wrap:wrap}.ab button{flex:1;min-width:80px;margin:0;padding:10px;min-height:44px;font-size:15px}
+.ul{display:grid;grid-template-columns:1fr 130px 80px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd);font-size:15px}
+.ul input,.ul select{min-height:40px;padding:6px}
+.ul .ck{display:flex;align-items:center;gap:6px}.ul .ck input{width:22px;min-height:22px}
+</style>
+</head>
+<body>
+<main>
+<h1>Job Sheets</h1>
+
+<div id="cfg" class="top box"><b>Not configured.</b><p class="m">Open <code>index.html</code> and set your Supabase URL and anon key in the <code>CFG</code> constant (see README).</p></div>
+
+<div id="auth" class="top box">
+<h2>Sign in</h2>
+<div id="nmw" style="display:none"><label>Full name</label><input id="an" autocomplete="name"></div>
+<label>Email</label><input id="ae" type="email" autocomplete="email">
+<label>Password</label><input id="ap" type="password" autocomplete="current-password">
+<button id="ai" type="button">Sign in</button>
+<button class="s" id="asw" type="button">Create an account</button>
+<p class="m er" id="am"></p>
+</div>
+
+<div id="wait" class="top box"><h2>Waiting for approval</h2>
+<p>Your account has been created. An administrator needs to approve it before you can use the app.</p>
+<button id="wr" type="button">Check again</button><button class="s" id="wo" type="button">Sign out</button></div>
+
+<div id="app" class="top">
+<div id="bar"><span id="who"></span><button class="s" id="so" type="button">Sign out</button></div>
+<nav><button data-v="list" class="on">Documents</button><button data-v="new">+ New</button><button data-v="set">Settings</button></nav>
+
+<div id="list" class="v on">
+<input id="q" type="search" placeholder="Search by client or number">
+<div class="ab" style="margin:10px 0">
+<button class="s" id="ex" type="button">Export all</button>
+<button class="s" id="im" type="button">Import</button>
+<input id="imf" type="file" accept=".json,application/json" hidden>
+</div>
+<div id="docs"></div>
+</div>
+
+<div id="edit" class="v">
+<div class="steps"><div class="on">1. Details</div><div>2. Signatures</div><div>3. PDF</div></div>
+
+<div id="s1" class="st on box">
+<h2>Document type</h2>
+<div class="seg">
+<label><input type="radio" name="t" value="0" checked><span>Job Sheet</span></label>
+<label><input type="radio" name="t" value="1"><span>Invoice</span></label>
+<label><input type="radio" name="t" value="2"><span>Cash Sale</span></label>
+</div>
+<div class="g"><div><label>Document No.</label><input id="num" placeholder="Auto (on first save)"></div>
+<div><label>Date</label><input id="date" type="date"></div></div>
+<h2>Client</h2>
+<label>Client</label><input id="client">
+<label>Address</label><input id="addr">
+<div class="g"><div><label>Telephone</label><input id="tel" type="tel"></div>
+<div><label>VAT No</label><input id="vat"></div></div>
+<label>Subject</label><input id="subj">
+<h2>Payment and dates</h2>
+<div class="g"><div><label>Price</label><input id="price"></div>
+<div><label>App. Inst. Date</label><input id="inst" type="date"></div></div>
+<label>Payment</label>
+<div class="seg">
+<label><input type="radio" name="p" value="-1" checked><span>None</span></label>
+<label><input type="radio" name="p" value="0"><span>Warranty</span></label>
+<label><input type="radio" name="p" value="1"><span>Cash</span></label>
+<label><input type="radio" name="p" value="2"><span>Invoice</span></label>
+</div>
+<h2>Job description</h2>
+<div id="rows"></div>
+<button class="s" id="add" type="button">+ Add item</button>
+<p class="m" id="ln"></p>
+<div class="g" style="margin-top:10px"><div><label>VAT %</label><input id="vr" type="number" inputmode="decimal"></div>
+<div class="tot" id="tt" style="align-self:end"></div></div>
+<h2>Materials used</h2>
+<textarea id="mat" rows="3"></textarea>
+<p class="m" id="ml"></p>
+<h2>Time and amount received</h2>
+<div class="g"><div><label>Time In</label><input id="tin" type="time"></div>
+<div><label>Time Out</label><input id="tout" type="time"></div></div>
+<div class="g"><div><label>Amount Received</label><input id="rec"></div>
+<div><label>Payment received by</label>
+<select id="rp"><option value="-1">None</option><option value="0">Cash</option><option value="1">Cheque</option><option value="2">Invoice</option></select></div></div>
+<div class="nav"><button class="s" id="sv1" type="button">Save</button><button id="n1" type="button">Next: signatures →</button></div>
+</div>
+
+<div id="s2" class="st box">
+<h2>Client</h2>
+<label>Client's name in full</label><input id="cn">
+<label>ID Card No</label><input id="cid">
+<label>Client's signature</label>
+<canvas class="pad" id="p1" width="800" height="300"></canvas>
+<button class="s" data-c="p1" type="button">Clear</button>
+<h2>Technician</h2>
+<label>Technician</label><select id="tech"></select>
+<label>Technician's signature</label>
+<canvas class="pad" id="p2" width="800" height="300"></canvas>
+<button class="s" data-c="p2" type="button">Clear</button>
+<div class="nav"><button class="s" id="b2" type="button">← Back</button><button id="n2" type="button">Save and preview →</button></div>
+</div>
+
+<div id="s3" class="st box">
+<canvas id="pv" width="1240" height="1754"></canvas>
+<button id="dl" type="button">Download PDF</button>
+<p class="m" id="msg"></p>
+<div class="nav"><button class="s" id="b3" type="button">← Edit</button><button class="s" id="bl" type="button">All documents</button></div>
+</div>
+</div>
+
+<div id="set" class="v">
+<div class="box">
+<h2>Company</h2>
+<div class="g"><div><label>Logo text</label><input id="st_brand"></div><div><label>Logo subtitle</label><input id="st_sub"></div></div>
+<label>Company name</label><input id="st_name">
+<label>Address</label><input id="st_addr">
+<div class="g"><div><label>Tel/Fax</label><input id="st_tel"></div><div><label>Mobile</label><input id="st_mob"></div></div>
+<div class="g"><div><label>Email</label><input id="st_email"></div><div><label>Web</label><input id="st_web"></div></div>
+<div class="g"><div><label>VAT Reg No</label><input id="st_vatno"></div><div><label>Default VAT %</label><input id="st_vat" type="number" inputmode="decimal"></div></div>
+<h2>Numbering</h2>
+<div class="g"><div><label>Next number</label><input id="st_next" type="number" inputmode="numeric"></div><div><label>Suffix (e.g. A)</label><input id="st_suf"></div></div>
+<button id="ssv" type="button">Save settings</button>
+<p class="m" id="sm"></p>
+</div>
+<div class="box" id="usr"><h2>Users and technicians</h2><div id="ul"></div><p class="m">New accounts must be approved here before they can use the app.</p></div>
+</div>
+</div>
+</main>
+<script>
+/* ===== CONFIG: paste your Supabase values here ===== */
+const CFG={url:'YOUR_SUPABASE_URL',key:'YOUR_SUPABASE_ANON_KEY'};
+/* =================================================== */
+const $=id=>document.getElementById(id),B='#1f3fae';
+const DS={brand:'KENCAR',sub:'GROUP',name:'Kencar Group of Companies',addr:'168, Industrial Estate, Luqa',tel:'+356 2138 2091',mob:'+356 9999 4575',email:'servicing@kencar.net',web:'www.kencar.net',vatno:'MT 1992 8816',vat:18,next:12160,suf:'A'};
+let sb,me=null,S={...DS},cur=null,uid0=null,signup=false;
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fD=v=>{if(!v)return'';const[a,b,c]=v.split('-');return c+'/'+b+'/'+a};
+const tot=d=>{const s=d.rows.reduce((a,r)=>a+(parseFloat(r.a)||0),0),v=s*(parseFloat(d.vr)||0)/100;return{s,v,t:s+v}};
+const top=n=>['cfg','auth','wait','app'].forEach(i=>$(i).classList.toggle('on',i==n));
+const isAdmin=()=>me&&me.approved&&me.role=='admin';
+
+/* ---------- auth ---------- */
+function init(){
+ if(!CFG.url||CFG.url.startsWith('YOUR_')){top('cfg');return}
+ sb=supabase.createClient(CFG.url,CFG.key);
+ sb.auth.onAuthStateChange((_,s)=>{setTimeout(()=>boot(s),0)});
+ sb.auth.getSession().then(({data})=>boot(data.session))}
+async function boot(s){
+ if(!s){uid0=null;me=null;top('auth');return}
+ if(uid0==s.user.id&&me&&me.approved&&$('app').classList.contains('on'))return;
+ uid0=s.user.id;
+ const{data,error}=await sb.from('profiles').select('*').eq('id',s.user.id).single();
+ if(error||!data){top('auth');$('am').textContent=error?error.message:'Profile not found';return}
+ me=data;if(!me.approved){top('wait');return}
+ await loadSettings();
+ $('who').textContent=(me.full_name||me.email)+' · '+me.role;
+ $('usr').style.display=isAdmin()?'block':'none';
+ top('app');renderList();show('list')}
+$('asw').onclick=()=>{signup=!signup;$('nmw').style.display=signup?'block':'none';$('ai').textContent=signup?'Create account':'Sign in';$('asw').textContent=signup?'I already have an account':'Create an account';$('am').textContent=''};
+$('ai').onclick=async()=>{const e=$('ae').value.trim(),p=$('ap').value;$('am').textContent='';
+ if(!e||!p){$('am').textContent='Enter email and password.';return}
+ const r=signup?await sb.auth.signUp({email:e,password:p,options:{data:{full_name:$('an').value.trim()}}}):await sb.auth.signInWithPassword({email:e,password:p});
+ if(r.error){$('am').textContent=r.error.message;return}
+ if(signup&&!r.data.session){$('am').textContent='Account created. Check your email to confirm, then sign in.';$('am').className='m'}};
+const out_=()=>sb.auth.signOut();$('so').onclick=out_;$('wo').onclick=out_;
+$('wr').onclick=()=>{uid0=null;sb.auth.getSession().then(({data})=>boot(data.session))};
+
+/* ---------- views ---------- */
+function show(v){['list','edit','set'].forEach(i=>$(i).classList.toggle('on',i==v));
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v==(v=='edit'?'new':v)));scrollTo(0,0)}
+function go(n){[1,2,3].forEach(i=>{$('s'+i).classList.toggle('on',i==n);document.querySelectorAll('.steps div')[i-1].classList.toggle('on',i<=n)});scrollTo(0,0)}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(v=='new')newDoc();else if(v=='list'){renderList();show('list')}else{fillSet();show('set')}});
+
+/* ---------- job description rows (auto-wrapping) ---------- */
+const grow=t=>{t.style.height='auto';t.style.height=t.scrollHeight+'px'};
+function row(d='',a=''){const e=document.createElement('div');e.className='row';e.innerHTML='<textarea class="ds" rows="1" placeholder="Description"></textarea><input class="am" type="number" inputmode="decimal" step="0.01" placeholder="Amount">';
+ const t=e.children[0];t.value=d;e.children[1].value=a;t.oninput=()=>{grow(t);info()};e.children[1].oninput=info;$('rows').appendChild(e);grow(t)}
+$('add').onclick=()=>row();
+$('mat').oninput=()=>{grow($('mat'));info()};$('vr').oninput=info;
+function info(){const d=collect(),t=tot(d),L=layout(d,mctx);
+ $('tt').textContent='Sub: '+t.s.toFixed(2)+' · VAT: '+t.v.toFixed(2)+' · Total: '+t.t.toFixed(2);
+ $('ln').textContent='Lines used: '+L.job.length+' / '+L.cap+(L.jobOver?' – too long, text will be cut off':'');$('ln').className='m'+(L.jobOver?' er':'');
+ $('ml').textContent='Material lines: '+L.mat.length+' / 4'+(L.matOver?' – too long, text will be cut off':'');$('ml').className='m'+(L.matOver?' er':'')}
+
+/* ---------- layout / text wrapping shared by editor and PDF ---------- */
+const mctx=document.createElement('canvas').getContext('2d');
+const TIERS=[{fs:23,lh:40,cap:10},{fs:20,lh:33,cap:12},{fs:17,lh:28,cap:14},{fs:14,lh:24,cap:16}];
+function wrap(x,t,fs,wf){x.font=fs+'px Arial,Helvetica,sans-serif';const o=[];
+ String(t||'').split('\n').forEach(p=>{let line='';
+  p.split(/\s+/).filter(Boolean).forEach(w=>{
+   while(x.measureText(w).width>wf(o.length)){let k=w.length-1;while(k>1&&x.measureText(w.slice(0,k)).width>wf(o.length))k--;if(line){o.push(line);line=''}o.push(w.slice(0,k));w=w.slice(k)}
+   const tr=line?line+' '+w:w;if(x.measureText(tr).width<=wf(o.length))line=tr;else{o.push(line);line=w}});
+  o.push(line)});
+ while(o.length&&!o[o.length-1])o.pop();return o}
+function layout(d,x){
+ const rows=d.rows.filter(r=>(r.d||'').trim()||r.a!=='');
+ const build=fs=>{const a=[];rows.forEach(r=>{const ls=wrap(x,r.d,fs,()=>860);if(!ls.length)ls.push('');ls.forEach((l,i)=>a.push({t:l,a:i?'':r.a}))});return a};
+ let tr=TIERS[TIERS.length-1],job;
+ for(const T of TIERS){const a=build(T.fs);if(a.length<=T.cap){tr=T;job=a;break}}
+ if(!job)job=build(tr.fs);
+ const jobOver=job.length>tr.cap;
+ let mfs=22,mat;for(;;){mat=wrap(x,d.mat,mfs,i=>i?860:670);if(mat.length<=4||mfs<=14)break;mfs--}
+ return{job:job.slice(0,tr.cap),cap:tr.cap,jobOver,fs:tr.fs,lh:tr.lh,mat:mat.slice(0,4),matOver:mat.length>4,mfs}}
+
+/* ---------- signature pads ---------- */
+function pad(cv){const x=cv.getContext('2d');x.lineWidth=5;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#0a1a6e';let dr=false;cv.dirty=false;
+const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]};
+cv.onpointerdown=e=>{dr=true;cv.setPointerCapture(e.pointerId);const[a,b]=pt(e);x.beginPath();x.moveTo(a,b);x.lineTo(a+.1,b+.1);x.stroke();cv.dirty=true};
+cv.onpointermove=e=>{if(!dr)return;const[a,b]=pt(e);x.lineTo(a,b);x.stroke()};
+cv.onpointerup=cv.onpointercancel=()=>{dr=false};
+cv.clear=()=>{x.clearRect(0,0,cv.width,cv.height);cv.dirty=false};
+cv.load=u=>{cv.clear();if(!u)return;const i=new Image();i.onload=()=>{x.drawImage(i,0,0);cv.dirty=true};i.src=u};
+cv.data=()=>cv.dirty?cv.toDataURL('image/png'):''}
+pad($('p1'));pad($('p2'));
+document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>$(b.dataset.c).clear());
+
+/* ---------- form <-> doc ---------- */
+const V=id=>$(id).value,R=n=>+document.querySelector('[name='+n+']:checked').value;
+function collect(){return{no:V('num').trim(),type:R('t'),date:V('date'),client:V('client'),addr:V('addr'),tel:V('tel'),vat:V('vat'),subj:V('subj'),price:V('price'),inst:V('inst'),pay:R('p'),
+rows:[...$('rows').children].map(r=>({d:r.children[0].value,a:r.children[1].value})),vr:V('vr'),mat:V('mat'),tin:V('tin'),tout:V('tout'),rec:V('rec'),rp:V('rp'),
+tech:V('tech'),cn:V('cn'),cid:V('cid'),s1:$('p1').data(),s2:$('p2').data()}}
+async function techOpts(sel){
+ const{data}=await sb.from('profiles').select('full_name,email').eq('approved',true);
+ const n=(data||[]).map(p=>p.full_name||p.email);
+ $('tech').innerHTML='<option value="">—</option>'+[...new Set([...n,...(sel?[sel]:[])])].map(t=>'<option>'+esc(t)+'</option>').join('');
+ $('tech').value=sel||(me&&(me.full_name||me.email))||''}
+function fill(d,id){cur=id?{id}:null;document.querySelector('[name=t][value="'+d.type+'"]').checked=true;document.querySelector('[name=p][value="'+d.pay+'"]').checked=true;
+['num:no','date','client','addr','tel','vat','subj','price','inst','vr','mat','tin','tout','rec','rp','cn','cid'].forEach(k=>{const[i,f]=k.split(':');$(i).value=d[f||i]??''});
+$('rows').innerHTML='';(d.rows&&d.rows.length?d.rows:[{},{},{}]).forEach(r=>row(r.d,r.a));grow($('mat'));
+$('p1').load(d.s1);$('p2').load(d.s2);techOpts(d.tech);info()}
+function newDoc(){fill({type:0,no:'',date:new Date().toISOString().slice(0,10),pay:-1,rows:[],vr:S.vat,rp:-1,tech:''},null);$('tech').value=me.full_name||me.email;go(1);show('edit')}
+
+/* ---------- save (shared database) ---------- */
+async function save(btn){const d=collect();
+ if(!d.client.trim()&&!d.no){alert('Enter a client or a number first.');return null}
+ if(btn)btn.disabled=true;
+ try{
+  const row={type:d.type,client:d.client,doc_date:d.date||null,total:tot(d).t,tech:d.tech,data:d,updated_at:new Date().toISOString()};
+  if(cur&&cur.id){row.no=d.no||cur.no;if(!d.no){d.no=cur.no;$('num').value=d.no}
+   const{error}=await sb.from('documents').update(row).eq('id',cur.id);if(error)throw error;cur.no=row.no}
+  else{let no=d.no;if(!no){const r=await sb.rpc('take_number');if(r.error)throw r.error;no=r.data}
+   d.no=no;row.no=no;const{data,error}=await sb.from('documents').insert(row).select('id,no').single();if(error)throw error;cur={id:data.id,no:data.no};$('num').value=data.no;await loadSettings()}
+  return{...d,id:cur.id}
+ }catch(e){alert(e.code=='23505'?'This document number already exists.':'Save failed: '+(e.message||e));return null}
+ finally{if(btn)btn.disabled=false}}
+
+/* ---------- list ---------- */
+let qt;$('q').oninput=()=>{clearTimeout(qt);qt=setTimeout(renderList,300)};
+async function renderList(){
+ const q=V('q').trim().replace(/[%,()*\\]/g,' ');
+ let r=sb.from('documents').select('id,no,client,doc_date,type,total,tech').order('updated_at',{ascending:false}).limit(200);
+ if(q)r=r.or('client.ilike.%'+q+'%,no.ilike.%'+q+'%');
+ const{data,error}=await r;
+ if(error){$('docs').innerHTML='<p class="m er">'+esc(error.message)+'</p>';return}
+ $('docs').innerHTML=data.length?data.map(d=>'<div class="box it" data-id="'+d.id+'"><b>'+esc(d.no)+' · '+esc(d.client||'(no client)')+'</b><small>'+['Job Sheet','Invoice','Cash Sale'][d.type]+' · '+fD(d.doc_date)+' · Total '+Number(d.total||0).toFixed(2)+(d.tech?' · '+esc(d.tech):'')+'</small><div class="ab"><button data-a="o" type="button">Open</button><button class="s" data-a="e" type="button">Edit</button><button class="s" data-a="p" type="button">PDF</button>'+(isAdmin()?'<button class="s d" data-a="x" type="button">Delete</button>':'')+'</div></div>').join(''):'<p class="m">'+(q?'No matches.':'No documents yet. Tap “+ New”.')+'</p>'}
+async function getDoc(id){const{data,error}=await sb.from('documents').select('id,no,data').eq('id',id).single();if(error){alert(error.message);return null}return{...data.data,no:data.no,id:data.id}}
+$('docs').onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const box=b.closest('[data-id]'),id=box.dataset.id,a=b.dataset.a;
+ if(a=='x'){if(confirm('Delete this document?')){const{error}=await sb.from('documents').delete().eq('id',id);if(error)alert(error.message);renderList()}return}
+ b.disabled=true;const d=await getDoc(id);b.disabled=false;if(!d)return;
+ if(a=='p'){await pdf(d);return}
+ fill(d,id);cur={id,no:d.no};show('edit');if(a=='e')go(1);else{await draw(d,$('pv'));go(3)}};
+
+/* ---------- flow ---------- */
+$('n1').onclick=()=>go(2);$('b2').onclick=()=>go(1);$('b3').onclick=()=>go(2);
+$('sv1').onclick=async e=>{await save(e.target)};
+$('n2').onclick=async e=>{const d=await save(e.target);if(!d)return;await draw(d,$('pv'));$('msg').textContent='';go(3);cur.doc=d};
+$('bl').onclick=()=>{renderList();show('list')};
+$('dl').onclick=()=>pdf({...collect(),no:$('num').value});
+
+/* ---------- settings ---------- */
+const SF={brand:'st_brand',sub:'st_sub',name:'st_name',addr:'st_addr',tel:'st_tel',mob:'st_mob',email:'st_email',web:'st_web',vatno:'st_vatno',vat:'st_vat',next:'st_next',suf:'st_suf'};
+async function loadSettings(){const{data}=await sb.from('app_settings').select('*').eq('id',1).single();if(data)S={...DS,...(data.data||{}),next:data.next_no,suf:data.suffix}}
+async function fillSet(){await loadSettings();const a=isAdmin();for(const k in SF){$(SF[k]).value=S[k];$(SF[k]).disabled=!a}$('ssv').style.display=a?'block':'none';$('sm').textContent=a?'':'Only administrators can change settings.';if(a)loadUsers()}
+$('ssv').onclick=async()=>{const n={};for(const k in SF)n[k]=V(SF[k]);const{next,suf,...rest}=n;
+ const{error}=await sb.from('app_settings').update({data:rest,next_no:parseInt(next)||1,suffix:suf}).eq('id',1);
+ $('sm').textContent=error?error.message:'Settings saved.';if(!error)S={...DS,...rest,next:parseInt(next)||1,suf}};
+async function loadUsers(){const{data,error}=await sb.from('profiles').select('id,email,full_name,role,approved').order('created_at');
+ if(error){$('ul').innerHTML='<p class="m er">'+esc(error.message)+'</p>';return}
+ $('ul').innerHTML=data.map(u=>'<div class="ul" data-u="'+u.id+'"><span>'+esc(u.full_name||'')+'<br><small>'+esc(u.email)+'</small></span><select data-f="role"><option'+(u.role=='technician'?' selected':'')+'>technician</option><option'+(u.role=='admin'?' selected':'')+'>admin</option></select><label class="ck" style="margin:0"><input type="checkbox" data-f="approved"'+(u.approved?' checked':'')+(u.id==me.id?' disabled':'')+'>OK</label></div>').join('')}
+$('ul').onchange=async e=>{const r=e.target.closest('[data-u]');if(!r)return;const f=e.target.dataset.f;
+ const v=f=='approved'?e.target.checked:e.target.value;const{error}=await sb.from('profiles').update({[f]:v}).eq('id',r.dataset.u);if(error){alert(error.message);loadUsers()}};
+
+/* ---------- export / import ---------- */
+async function out(name,data,mime){
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:mime}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+$('ex').onclick=async e=>{e.target.disabled=true;
+ const{data,error}=await sb.from('documents').select('no,type,client,doc_date,total,tech,data,created_at,updated_at').order('created_at').limit(5000);e.target.disabled=false;
+ if(error){alert(error.message);return}
+ out('jobsheets-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({app:'jobsheets',v:2,docs:data}),'application/json')};
+$('im').onclick=()=>$('imf').click();
+$('imf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+ try{const j=JSON.parse(await f.text());const a=Array.isArray(j)?j:j.docs;if(!Array.isArray(a))throw new Error('bad');
+  const rows=a.filter(d=>d&&(d.data||d.rows)).map(d=>{const x=d.data||d,no=d.no||x.no;return{no,type:x.type??d.type??0,client:x.client||d.client||'',doc_date:(x.date||d.doc_date)||null,total:tot(x).t,tech:x.tech||'',data:x,updated_at:d.updated_at||new Date().toISOString()}}).filter(r=>r.no);
+  if(!rows.length)throw new Error('No documents found');
+  if(!confirm('Import '+rows.length+' document(s)? Documents with the same number will be overwritten.'))return;
+  const{error}=await sb.from('documents').upsert(rows,{onConflict:'no'});if(error)throw error;
+  renderList();alert('Imported.')}catch(x){alert('Import failed: '+(x.message||x))}};
+
+/* ---------- drawing ---------- */
+const img=u=>new Promise(r=>{if(!u)return r(null);const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=u});
+async function draw(d,c){
+const x=c.getContext('2d'),[i1,i2]=await Promise.all([img(d.s1),img(d.s2)]);
+x.fillStyle='#fff';x.fillRect(0,0,1240,1754);
+const F=(sz,b)=>x.font=(b?'bold ':'')+sz+'px Arial,Helvetica,sans-serif';
+const T=(t,px,py,sz,b,col,al,mw)=>{if(!t)return;F(sz,b);x.fillStyle=col||'#111';x.textAlign=al||'left';let s=sz;if(mw)while(x.measureText(t).width>mw&&s>11){s--;F(s,b)}x.fillText(t,px,py)};
+const L=(x1,y1,x2,y2,w,col)=>{x.beginPath();x.strokeStyle=col||'#444';x.lineWidth=w||1.5;x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke()};
+const RR=(px,py,w,h,r,fill,st)=>{x.beginPath();x.roundRect(px,py,w,h,r);if(fill){x.fillStyle=fill;x.fill()}if(st){x.strokeStyle=st;x.lineWidth=2;x.stroke()}};
+const CK=(px,py,on)=>{RR(px,py,36,36,10,'#fff','#333');if(on)T('✓',px+18,py+29,30,true,B,'center')};
+x.fillStyle='#e8281e';x.beginPath();x.arc(60,50,125,0,7);x.fill();x.fillStyle=B;x.beginPath();x.arc(60,50,95,0,7);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(60,50,62,0,7);x.fill();
+T(S.brand,330,110,96,true,B,'left',420);L(330,122,750,122,3,B);T((S.sub||'').split('').join(' '),540,170,32,false,'#222','center',400);
+[S.name,S.addr,S.tel&&'Tel/Fax: '+S.tel,S.mob&&'Mob: '+S.mob,S.email&&'Email: '+S.email,S.web&&'Web: '+S.web,S.vatno&&'VAT Reg No: '+S.vatno].filter(Boolean).forEach((t,i)=>T(t,1170,38+i*27,21,i==0,'#222','right',400));
+x.fillStyle=B;x.fillRect(0,200,1240,80);
+[['JOB SHEET',60,225],['INVOICE',470,590],['CASH SALE',880,1040]].forEach((a,i)=>{T(a[0],a[1],252,26,true,'#fff');RR(a[2],212,i==2?170:150,52,12,'#fff');if(d.type==i)T('✓',a[2]+(i==2?85:75),252,34,true,B,'center')});
+T(d.no,1170,352,38,true,'#111','right',300);
+const lf=(lab,v,y,x2,lx)=>{T(lab,lx,y,23,false,'#222');const s=lx+x.measureText(lab).width+12;L(s,y+6,x2,y+6,1,'#999');T(v,s+6,y-3,23,false,'#0a1a6e','left',x2-s-10)};
+lf('Client:',d.client,368,590,80);lf('Address:',d.addr,408,590,80);L(80,448,590,448,1,'#999');L(80,488,590,488,1,'#999');
+lf('Telephone:',d.tel,528,590,80);lf('Vat No:',d.vat,568,590,80);lf('Subject:',d.subj,608,590,80);L(80,648,1170,648,1,'#999');
+lf('Date:',fD(d.date),448,1170,640);lf('Price:',d.price,488,1170,640);lf('App. Inst. Date:',fD(d.inst),528,1170,640);
+T('PAYMENT:',640,574,23,true);T('Warranty',770,574,23);CK(865,546,d.pay==0);T('Cash',930,574,23);CK(985,546,d.pay==1);T('Invoice',1050,574,23);CK(1130,546,d.pay==2);
+x.fillStyle=B;x.fillRect(78,690,1092,80);T('JOB DESCRIPTION',98,742,26,true,'#fff');T('AMOUNT',1148,740,26,true,'#fff','right');
+const Y=layout(d,x);
+for(let i=0;i<Y.cap;i++){const y=774+(i+1)*Y.lh,r=Y.job[i];L(78,y,1170,y,1.3,'#333');if(r){T(r.t,90,y-Y.lh*.22,Y.fs,false,'#0a1a6e');const a=parseFloat(r.a);if(!isNaN(a))T(a.toFixed(2),1156,y-Y.lh*.22,Y.fs,false,'#0a1a6e','right')}}
+L(980,774,980,1670,1.3,'#555');
+T('Materials Used:',80,1230,24,true);
+for(let i=0;i<4;i++){const y=1232+i*38;L(78,y,1170,y,1.3,'#333');if(Y.mat[i])T(Y.mat[i],i?90:300,y-8,Y.mfs,false,'#0a1a6e')}
+T('Time In:',78,1400,24,true);RR(185,1372,190,50,10,'#fff','#333');T(d.tin,280,1406,24,false,'#0a1a6e','center');
+T('Time Out:',470,1400,24,true);RR(585,1372,190,50,10,'#fff','#333');T(d.tout,680,1406,24,false,'#0a1a6e','center');
+T('Amount Recieved:',78,1470,24,true);RR(300,1442,190,50,10,'#fff','#333');T(d.rec,395,1476,24,false,'#0a1a6e','center',170);
+T('Payment:',545,1470,24,true);T('Cash:',650,1470,23,true);CK(725,1442,d.rp==0);T('Cheque:',780,1470,23,true);CK(878,1442,d.rp==1);T('Invoice:',935,1470,23,true);CK(1030,1442,d.rp==2);
+const t=tot(d);
+T('SUB TOTAL',970,1540,21,true,'#222','right');L(985,1548,1170,1548,1.3);if(t.s)T(t.s.toFixed(2),1160,1542,23,false,'#0a1a6e','right');
+T('VAT',970,1590,21,true,'#222','right');L(985,1598,1170,1598,1.3);if(t.s)T(t.v.toFixed(2),1160,1592,23,false,'#0a1a6e','right');
+T('TOTAL',970,1640,21,true,'#222','right');L(985,1648,1170,1648,1.3);if(t.s)T(t.t.toFixed(2),1160,1642,24,true,'#0a1a6e','right');
+T("Client's name in full:",78,1530,22);L(285,1536,590,1536,1,'#999');T(d.cn,291,1530,24,false,'#0a1a6e','left',295);
+T('ID Card No:',610,1530,22);L(745,1536,960,1536,1,'#999');T(d.cid,751,1530,24,false,'#0a1a6e','left',205);
+T("Client's Signature:",78,1620,22);L(250,1636,490,1636,1,'#999');
+T('Technician Signature:',510,1620,22);L(745,1636,960,1636,1,'#999');T(d.tech,745,1664,18,false,'#444','left',215);
+const dg=(im,px,w)=>{if(im){const r=Math.min(w/im.width,80/im.height);x.drawImage(im,px,1636-im.height*r,im.width*r,im.height*r)}};
+dg(i1,250,240);dg(i2,745,215);
+x.fillStyle=B;x.fillRect(0,1690,1240,64);T(S.brand+' '+S.sub,620,1730,22,true,'#fff','center')}
+async function pdf(d){const c=document.createElement('canvas');c.width=1240;c.height=1754;await draw(d,c);
+const {jsPDF}=window.jspdf,p=new jsPDF({unit:'mm',format:'a4'});p.addImage(c.toDataURL('image/jpeg',.92),'JPEG',0,0,210,297);
+p.save(((d.client||'jobsheet')+'_'+(d.no||'')).replace(/[^\p{L}\p{N}]+/gu,'_').slice(0,50)+'.pdf')}
+init();
+</script>
+</body>
+</html>
