@@ -182,26 +182,26 @@ let sb,me=null,S={...DS},cur=null,uid0=null,signup=false;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fD=v=>{if(!v)return'';const[a,b,c]=v.split('-');return c+'/'+b+'/'+a};
 const tot=d=>{const s=d.rows.reduce((a,r)=>a+(parseFloat(r.a)||0),0),v=s*(parseFloat(d.vr)||0)/100;return{s,v,t:s+v}};
-const top=n=>['cfg','auth','wait','app'].forEach(i=>$(i).classList.toggle('on',i==n));
+const scr=n=>['cfg','auth','wait','app'].forEach(i=>$(i).classList.toggle('on',i==n));
 const isAdmin=()=>me&&me.approved&&me.role=='admin';
 
 /* ---------- auth ---------- */
 function init(){
- if(!CFG.url||CFG.url.startsWith('YOUR_')){top('cfg');return}
+ if(!CFG.url||CFG.url.startsWith('YOUR_')){scr('cfg');return}
  sb=supabase.createClient(CFG.url,CFG.key);
  sb.auth.onAuthStateChange((_,s)=>{setTimeout(()=>boot(s),0)});
  sb.auth.getSession().then(({data})=>boot(data.session))}
 async function boot(s){
- if(!s){uid0=null;me=null;top('auth');return}
+ if(!s){uid0=null;me=null;scr('auth');return}
  if(uid0==s.user.id&&me&&me.approved&&$('app').classList.contains('on'))return;
  uid0=s.user.id;
  const{data,error}=await sb.from('profiles').select('*').eq('id',s.user.id).single();
- if(error||!data){top('auth');$('am').textContent=error?error.message:'Profile not found';return}
- me=data;if(!me.approved){top('wait');return}
+ if(error||!data){scr('auth');$('am').textContent=error?error.message:'Profile not found';return}
+ me=data;if(!me.approved){scr('wait');return}
  await loadSettings();
  $('who').textContent=(me.full_name||me.email)+' · '+me.role;
  $('usr').style.display=isAdmin()?'block':'none';
- top('app');renderList();show('list')}
+ scr('app');renderList();show('list')}
 $('asw').onclick=()=>{signup=!signup;$('nmw').style.display=signup?'block':'none';$('ai').textContent=signup?'Create account':'Sign in';$('asw').textContent=signup?'I already have an account':'Create an account';$('am').textContent=''};
 $('ai').onclick=async()=>{const e=$('ae').value.trim(),p=$('ap').value;$('am').textContent='';
  if(!e||!p){$('am').textContent='Enter email and password.';return}
