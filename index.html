@@ -64,8 +64,14 @@ button.d{color:var(--rd)}
 <label>Password</label><input id="ap" type="password" autocomplete="current-password">
 <button id="ai" type="button">Sign in</button>
 <button class="s" id="asw" type="button">Create an account</button>
+<button class="s" id="afp" type="button">Forgot password?</button>
 <p class="m er" id="am"></p>
 </div>
+
+<div id="rec" class="top box"><h2>Set a new password</h2>
+<label>New password</label><input id="rp1" type="password" autocomplete="new-password">
+<label>Repeat password</label><input id="rp2" type="password" autocomplete="new-password">
+<button id="rpb" type="button">Save password</button><p class="m er" id="rm"></p></div>
 
 <div id="wait" class="top box"><h2>Waiting for approval</h2>
 <p>Your account has been created. An administrator needs to approve it before you can use the app.</p>
@@ -73,11 +79,11 @@ button.d{color:var(--rd)}
 
 <div id="app" class="top">
 <div id="bar"><span id="who"></span><button class="s" id="so" type="button">Sign out</button></div>
-<nav><button data-v="list" class="on">Documents</button><button data-v="new">+ New</button><button data-v="set">Settings</button></nav>
+<nav><button data-v="list" class="on">Documents</button><button data-v="new">+ New</button><button data-v="set" id="nset">Settings</button></nav>
 
 <div id="list" class="v on">
 <input id="q" type="search" placeholder="Search by client or number">
-<div class="ab" style="margin:10px 0">
+<div class="ab" id="exim" style="margin:10px 0">
 <button class="s" id="ex" type="button">Export all</button>
 <button class="s" id="im" type="button">Import</button>
 <input id="imf" type="file" accept=".json,application/json" hidden>
@@ -178,11 +184,11 @@ const CFG={url:'https://sskixfoplwmpmwnoewqi.supabase.co',key:'sb_publishable_ln
 /* =================================================== */
 const $=id=>document.getElementById(id),B='#1f3fae';
 const DS={brand:'KENCAR',sub:'GROUP',name:'Kencar Group of Companies',addr:'168, Industrial Estate, Luqa',tel:'+356 2138 2091',mob:'+356 9999 4575',email:'servicing@kencar.net',web:'www.kencar.net',vatno:'MT 1992 8816',vat:18,next:12160,suf:'A'};
-let sb,me=null,S={...DS},cur=null,uid0=null,signup=false;
+let sb,me=null,S={...DS},cur=null,uid0=null,signup=false,recovering=/type=recovery/.test(location.hash);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fD=v=>{if(!v)return'';const[a,b,c]=v.split('-');return c+'/'+b+'/'+a};
 const tot=d=>{const s=d.rows.reduce((a,r)=>a+(parseFloat(r.a)||0),0),v=s*(parseFloat(d.vr)||0)/100;return{s,v,t:s+v}};
-const scr=n=>['cfg','auth','wait','app'].forEach(i=>$(i).classList.toggle('on',i==n));
+const scr=n=>['cfg','auth','rec','wait','app'].forEach(i=>$(i).classList.toggle('on',i==n));
 const isAdmin=()=>me&&me.approved&&me.role=='admin';
 
 /* ---------- auth ---------- */
@@ -191,10 +197,11 @@ function init(){
  if(!CFG.url||CFG.url.startsWith('YOUR_')||!CFG.key||CFG.key.startsWith('YOUR_')){scr('cfg');return}
  if(typeof supabase==='undefined'||!window.jspdf){fail('A required library failed to load. Check your internet connection and reload.');return}
  try{sb=supabase.createClient(CFG.url,CFG.key)}catch(e){fail('Invalid Supabase URL or key: '+e.message);return}
- sb.auth.onAuthStateChange((_,s)=>{setTimeout(()=>boot(s),0)});
+ sb.auth.onAuthStateChange((ev,s)=>{if(ev=='PASSWORD_RECOVERY')recovering=true;setTimeout(()=>boot(s),0)});
  sb.auth.getSession().then(({data})=>boot(data.session))}
 async function boot(s){
  if(!s){uid0=null;me=null;scr('auth');return}
+ if(recovering){scr('rec');return}
  if(uid0==s.user.id&&me&&me.approved&&$('app').classList.contains('on'))return;
  uid0=s.user.id;
  const{data,error}=await sb.from('profiles').select('*').eq('id',s.user.id).single();
@@ -202,14 +209,24 @@ async function boot(s){
  me=data;if(!me.approved){scr('wait');return}
  await loadSettings();
  $('who').textContent=(me.full_name||me.email)+' · '+me.role;
- $('usr').style.display=isAdmin()?'block':'none';
+ $('usr').style.display=isAdmin()?'block':'none';$('nset').style.display=isAdmin()?'':'none';$('exim').style.display=isAdmin()?'':'none';
  scr('app');renderList();show('list')}
-$('asw').onclick=()=>{signup=!signup;$('nmw').style.display=signup?'block':'none';$('ai').textContent=signup?'Create account':'Sign in';$('asw').textContent=signup?'I already have an account':'Create an account';$('am').textContent=''};
-$('ai').onclick=async()=>{const e=$('ae').value.trim(),p=$('ap').value;$('am').textContent='';
- if(!e||!p){$('am').textContent='Enter email and password.';return}
+$('asw').onclick=()=>{signup=!signup;$('nmw').style.display=signup?'block':'none';$('ai').textContent=signup?'Create account':'Sign in';$('asw').textContent=signup?'I already have an account':'Create an account';$('afp').style.display=signup?'none':'';am('')};
+const am=(t,ok)=>{$('am').textContent=t;$('am').className='m'+(ok?'':' er')};
+$('afp').onclick=async()=>{const e=$('ae').value.trim();if(!e){am('Enter your email above first.');return}
+ const{error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});
+ am(error?error.message:'If this email has an account, a password reset link has been sent.',!error)};
+$('rpb').onclick=async()=>{const a=$('rp1').value,m=$('rm');
+ if(a.length<6){m.textContent='Password must be at least 6 characters.';return}
+ if(a!==$('rp2').value){m.textContent='Passwords do not match.';return}
+ const{error}=await sb.auth.updateUser({password:a});
+ if(error){m.textContent=error.message;return}
+ recovering=false;history.replaceState(null,'',location.pathname);uid0=null;sb.auth.getSession().then(({data})=>boot(data.session))};
+$('ai').onclick=async()=>{const e=$('ae').value.trim(),p=$('ap').value;am('');
+ if(!e||!p){am('Enter email and password.');return}
  const r=signup?await sb.auth.signUp({email:e,password:p,options:{data:{full_name:$('an').value.trim()}}}):await sb.auth.signInWithPassword({email:e,password:p});
- if(r.error){$('am').textContent=r.error.message;return}
- if(signup&&!r.data.session){$('am').textContent='Account created. Check your email to confirm, then sign in.';$('am').className='m'}};
+ if(r.error){am(r.error.message);return}
+ if(signup&&!r.data.session)am('Account created. Check your email to confirm, then sign in.',1)};
 const out_=()=>sb.auth.signOut();$('so').onclick=out_;$('wo').onclick=out_;
 $('wr').onclick=()=>{uid0=null;sb.auth.getSession().then(({data})=>boot(data.session))};
 
@@ -217,7 +234,7 @@ $('wr').onclick=()=>{uid0=null;sb.auth.getSession().then(({data})=>boot(data.ses
 function show(v){['list','edit','set'].forEach(i=>$(i).classList.toggle('on',i==v));
  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v==(v=='edit'?'new':v)));scrollTo(0,0)}
 function go(n){[1,2,3].forEach(i=>{$('s'+i).classList.toggle('on',i==n);document.querySelectorAll('.steps div')[i-1].classList.toggle('on',i<=n)});scrollTo(0,0)}
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(v=='new')newDoc();else if(v=='list'){renderList();show('list')}else{fillSet();show('set')}});
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(v=='new')newDoc();else if(v=='list'){renderList();show('list')}else if(isAdmin()){fillSet();show('set')}});
 
 /* ---------- job description rows (auto-wrapping) ---------- */
 const grow=t=>{t.style.height='auto';t.style.height=t.scrollHeight+'px'};
