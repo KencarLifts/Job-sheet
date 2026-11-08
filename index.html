@@ -268,18 +268,18 @@ function collect(){return{no:V('num').trim(),type:R('t'),date:V('date'),client:V
 rows:[...$('rows').children].map(r=>({d:r.children[0].value,a:r.children[1].value})),vr:V('vr'),mat:V('mat'),tin:V('tin'),tout:V('tout'),rec:V('rec'),rp:V('rp'),
 tech:V('tech'),cn:V('cn'),cid:V('cid'),s1:$('p1').data(),s2:$('p2').data()}}
 async function techOpts(sel){
- const{data}=await sb.from('profiles').select('full_name,email').eq('approved',true);
- const n=(data||[]).map(p=>p.full_name||p.email);
+ const own=me.full_name||me.email;let n=[own];
+ if(isAdmin()){const{data}=await sb.from('profiles').select('full_name,email').eq('approved',true);n=(data||[]).map(p=>p.full_name||p.email)}
  $('tech').innerHTML='<option value="">—</option>'+[...new Set([...n,...(sel?[sel]:[])])].map(t=>'<option>'+esc(t)+'</option>').join('');
- $('tech').value=sel||(me&&(me.full_name||me.email))||''}
+ $('tech').value=sel||own;$('tech').disabled=!isAdmin()}
 function fill(d,id){cur=id?{id}:null;document.querySelector('[name=t][value="'+d.type+'"]').checked=true;document.querySelector('[name=p][value="'+d.pay+'"]').checked=true;
 ['num:no','date','client','addr','tel','vat','subj','price','inst','vr','mat','tin','tout','rec','rp','cn','cid'].forEach(k=>{const[i,f]=k.split(':');$(i).value=d[f||i]??''});
 $('rows').innerHTML='';(d.rows&&d.rows.length?d.rows:[{},{},{}]).forEach(r=>row(r.d,r.a));grow($('mat'));
 $('p1').load(d.s1);$('p2').load(d.s2);techOpts(d.tech);info()}
-function newDoc(){fill({type:0,no:'',date:new Date().toISOString().slice(0,10),pay:-1,rows:[],vr:S.vat,rp:-1,tech:''},null);$('tech').value=me.full_name||me.email;go(1);show('edit')}
+function newDoc(){$('b3').style.display='';fill({type:0,no:'',date:new Date().toISOString().slice(0,10),pay:-1,rows:[],vr:S.vat,rp:-1,tech:''},null);$('tech').value=me.full_name||me.email;go(1);show('edit')}
 
 /* ---------- save (shared database) ---------- */
-async function save(btn){const d=collect();
+async function save(btn){if(cur&&cur.ro){alert('Only the author or an administrator can edit this document.');return null}const d=collect();
  if(!d.client.trim()&&!d.no){alert('Enter a client or a number first.');return null}
  if(btn)btn.disabled=true;
  try{
@@ -296,17 +296,17 @@ async function save(btn){const d=collect();
 let qt;$('q').oninput=()=>{clearTimeout(qt);qt=setTimeout(renderList,300)};
 async function renderList(){
  const q=V('q').trim().replace(/[%,()*\\]/g,' ');
- let r=sb.from('documents').select('id,no,client,doc_date,type,total,tech').order('updated_at',{ascending:false}).limit(200);
+ let r=sb.from('documents').select('id,no,client,doc_date,type,total,tech,created_by').order('updated_at',{ascending:false}).limit(200);
  if(q)r=r.or('client.ilike.%'+q+'%,no.ilike.%'+q+'%');
  const{data,error}=await r;
  if(error){$('docs').innerHTML='<p class="m er">'+esc(error.message)+'</p>';return}
- $('docs').innerHTML=data.length?data.map(d=>'<div class="box it" data-id="'+d.id+'"><b>'+esc(d.no)+' · '+esc(d.client||'(no client)')+'</b><small>'+['Job Sheet','Invoice','Cash Sale'][d.type]+' · '+fD(d.doc_date)+' · Total '+Number(d.total||0).toFixed(2)+(d.tech?' · '+esc(d.tech):'')+'</small><div class="ab"><button data-a="o" type="button">Open</button><button class="s" data-a="e" type="button">Edit</button><button class="s" data-a="p" type="button">PDF</button>'+(isAdmin()?'<button class="s d" data-a="x" type="button">Delete</button>':'')+'</div></div>').join(''):'<p class="m">'+(q?'No matches.':'No documents yet. Tap “+ New”.')+'</p>'}
-async function getDoc(id){const{data,error}=await sb.from('documents').select('id,no,data').eq('id',id).single();if(error){alert(error.message);return null}return{...data.data,no:data.no,id:data.id}}
+ $('docs').innerHTML=data.length?data.map(d=>'<div class="box it" data-id="'+d.id+'"><b>'+esc(d.no)+' · '+esc(d.client||'(no client)')+'</b><small>'+['Job Sheet','Invoice','Cash Sale'][d.type]+' · '+fD(d.doc_date)+' · Total '+Number(d.total||0).toFixed(2)+(d.tech?' · '+esc(d.tech):'')+'</small><div class="ab"><button data-a="o" type="button">Open</button>'+((isAdmin()||d.created_by==me.id)?'<button class="s" data-a="e" type="button">Edit</button>':'')+'<button class="s" data-a="p" type="button">PDF</button>'+(isAdmin()?'<button class="s d" data-a="x" type="button">Delete</button>':'')+'</div></div>').join(''):'<p class="m">'+(q?'No matches.':'No documents yet. Tap “+ New”.')+'</p>'}
+async function getDoc(id){const{data,error}=await sb.from('documents').select('id,no,data,created_by').eq('id',id).single();if(error){alert(error.message);return null}return{...data.data,no:data.no,id:data.id,cb:data.created_by}}
 $('docs').onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const box=b.closest('[data-id]'),id=box.dataset.id,a=b.dataset.a;
  if(a=='x'){if(confirm('Delete this document?')){const{error}=await sb.from('documents').delete().eq('id',id);if(error)alert(error.message);renderList()}return}
  b.disabled=true;const d=await getDoc(id);b.disabled=false;if(!d)return;
  if(a=='p'){await pdf(d);return}
- fill(d,id);cur={id,no:d.no};show('edit');if(a=='e')go(1);else{await draw(d,$('pv'));go(3)}};
+ fill(d,id);cur={id,no:d.no,ro:!(isAdmin()||d.cb==me.id)};$('b3').style.display=cur.ro?'none':'';show('edit');if(a=='e')go(1);else{await draw(d,$('pv'));go(3)}};
 
 /* ---------- flow ---------- */
 $('n1').onclick=()=>go(2);$('b2').onclick=()=>go(1);$('b3').onclick=()=>go(2);
