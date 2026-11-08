@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Job Sheets</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{--bg:#f3f5fb;--card:#fff;--tx:#14192b;--mu:#5d6580;--bd:#cfd5e8;--pr:#1f3fae;--prt:#fff;--rd:#c62828;--ok:#2e7d32;color-scheme:light dark}
@@ -55,7 +55,7 @@ button.d{color:var(--rd)}
 <main>
 <h1>Job Sheets</h1>
 
-<div id="cfg" class="top box"><b>Not configured.</b><p class="m">Open <code>index.html</code> and set your Supabase URL and anon key in the <code>CFG</code> constant (see README).</p></div>
+<div id="cfg" class="top box"><b id="cfgt">Not configured.</b><p class="m" id="cfgm">Open <code>index.html</code> and set your Supabase URL and anon key in the <code>CFG</code> constant (see README).</p></div>
 
 <div id="auth" class="top box">
 <h2>Sign in</h2>
@@ -174,7 +174,7 @@ button.d{color:var(--rd)}
 </main>
 <script>
 /* ===== CONFIG: paste your Supabase values here ===== */
-const CFG={url:'sskixfoplwmpmwnoewqi',key:'sb_publishable_lne6X59xzG6hFx0lLzKxUw_GBzrDfIB'};
+const CFG={url:'https://sskixfoplwmpmwnoewqi.supabase.co',key:'sb_publishable_lne6X59xzG6hFx0lLzKxUw_GBzrDfIB'};
 /* =================================================== */
 const $=id=>document.getElementById(id),B='#1f3fae';
 const DS={brand:'KENCAR',sub:'GROUP',name:'Kencar Group of Companies',addr:'168, Industrial Estate, Luqa',tel:'+356 2138 2091',mob:'+356 9999 4575',email:'servicing@kencar.net',web:'www.kencar.net',vatno:'MT 1992 8816',vat:18,next:12160,suf:'A'};
@@ -186,9 +186,11 @@ const scr=n=>['cfg','auth','wait','app'].forEach(i=>$(i).classList.toggle('on',i
 const isAdmin=()=>me&&me.approved&&me.role=='admin';
 
 /* ---------- auth ---------- */
+function fail(m){$('cfgt').textContent='Error';$('cfgm').textContent=m;scr('cfg')}
 function init(){
- if(!CFG.url||CFG.url.startsWith('YOUR_')){scr('cfg');return}
- sb=supabase.createClient(CFG.url,CFG.key);
+ if(!CFG.url||CFG.url.startsWith('YOUR_')||!CFG.key||CFG.key.startsWith('YOUR_')){scr('cfg');return}
+ if(typeof supabase==='undefined'||!window.jspdf){fail('A required library failed to load. Check your internet connection and reload.');return}
+ try{sb=supabase.createClient(CFG.url,CFG.key)}catch(e){fail('Invalid Supabase URL or key: '+e.message);return}
  sb.auth.onAuthStateChange((_,s)=>{setTimeout(()=>boot(s),0)});
  sb.auth.getSession().then(({data})=>boot(data.session))}
 async function boot(s){
@@ -387,6 +389,7 @@ x.fillStyle=B;x.fillRect(0,1690,1240,64);T(S.brand+' '+S.sub,620,1730,22,true,'#
 async function pdf(d){const c=document.createElement('canvas');c.width=1240;c.height=1754;await draw(d,c);
 const {jsPDF}=window.jspdf,p=new jsPDF({unit:'mm',format:'a4'});p.addImage(c.toDataURL('image/jpeg',.92),'JPEG',0,0,210,297);
 p.save(((d.client||'jobsheet')+'_'+(d.no||'')).replace(/[^\p{L}\p{N}]+/gu,'_').slice(0,50)+'.pdf')}
+window.addEventListener('error',e=>{if(!document.querySelector('.top.on'))fail(e.message)});
 init();
 </script>
 </body>
