@@ -358,15 +358,17 @@ $('ul').onchange=async e=>{const r=e.target.closest('[data-u]');if(!r)return;con
 async function out(name,data,mime){
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:mime}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
 $('ex').onclick=async e=>{e.target.disabled=true;
- const{data,error}=await sb.from('documents').select('no,type,client,doc_date,total,tech,data,created_at,updated_at').order('created_at').limit(5000);e.target.disabled=false;
+ const{data,error}=await sb.from('documents').select('no,type,client,tech,created_at,updated_at,'+['date','addr','tel','vat','subj','price','inst','pay','rows','vr','mat','tin','tout','rec','rp','cn','cid'].map(k=>k+':data->'+k).join(',')).order('created_at').limit(5000);e.target.disabled=false;
  if(error){alert(error.message);return}
- out('jobsheets-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({app:'jobsheets',v:2,docs:data}),'application/json')};
+ out('jobsheets-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({app:'jobsheets',v:3,docs:data}),'application/json')};
 $('im').onclick=()=>$('imf').click();
 $('imf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
  try{const j=JSON.parse(await f.text());const a=Array.isArray(j)?j:j.docs;if(!Array.isArray(a))throw new Error('bad');
   const{data:pr}=await sb.from('profiles').select('id,full_name,email');const mp={};(pr||[]).forEach(p=>{[p.full_name,p.email].forEach(k=>{if(k)mp[k.trim().toLowerCase()]=p.id})});
   const rows=a.filter(d=>d&&(d.data||d.rows)).map(d=>{const x=d.data||d,no=d.no||x.no;return{no,type:x.type??d.type??0,client:x.client||d.client||'',doc_date:(x.date||d.doc_date)||null,total:tot(x).t,tech:x.tech||'',created_by:mp[(x.tech||'').trim().toLowerCase()]||me.id,data:x,updated_at:d.updated_at||new Date().toISOString()}}).filter(r=>r.no);
   if(!rows.length)throw new Error('No documents found');
+  const ex={};for(let i=0;i<rows.length;i+=100){const{data:e}=await sb.from('documents').select('no,s1:data->>s1,s2:data->>s2').in('no',rows.slice(i,i+100).map(r=>r.no));(e||[]).forEach(r=>ex[r.no]=r)}
+  rows.forEach(r=>{const e=ex[r.no];r.data.s1=r.data.s1||(e&&e.s1)||'';r.data.s2=r.data.s2||(e&&e.s2)||''});
   if(!confirm('Import '+rows.length+' document(s)? Documents with the same number will be overwritten.'))return;
   const{error}=await sb.from('documents').upsert(rows,{onConflict:'no'});if(error)throw error;
   renderList();alert('Imported.')}catch(x){alert('Import failed: '+(x.message||x))}};
