@@ -403,17 +403,17 @@ for(let i=0;i<4;i++){const y=1232+i*38;L(78,y,1170,y,1.3,'#333');if(Y.mat[i])T(Y
 T('Time In:',78,1400,24,true);RR(185,1372,190,50,10,'#fff','#333');T(d.tin,280,1406,24,false,'#0a1a6e','center');
 T('Time Out:',470,1400,24,true);RR(585,1372,190,50,10,'#fff','#333');T(d.tout,680,1406,24,false,'#0a1a6e','center');
 T('Amount Recieved:',78,1470,24,true);RR(300,1442,190,50,10,'#fff','#333');T(d.rec,395,1476,24,false,'#0a1a6e','center',170);
-T('Payment:',545,1470,24,true);T('Cash:',650,1470,23,true);CK(725,1442,d.rp==0);T('Cheque:',780,1470,23,true);CK(878,1442,d.rp==1);T('Invoice:',935,1470,23,true);CK(1030,1442,d.rp==2);
+T('Payment:',500,1470,21,true);T('Cash:',603,1470,21,true);CK(666,1442,d.rp==0);T('Cheque:',712,1470,21,true);CK(802,1442,d.rp==1);T('Invoice:',848,1470,21,true);CK(932,1442,d.rp==2);
 const t=tot(d);
-T('SUB TOTAL',970,1540,21,true,'#222','right');L(985,1548,1170,1548,1.3);if(t.s)T(t.s.toFixed(2),1160,1542,23,false,'#0a1a6e','right');
-T('VAT',970,1590,21,true,'#222','right');L(985,1598,1170,1598,1.3);if(t.s)T(t.v.toFixed(2),1160,1592,23,false,'#0a1a6e','right');
-T('TOTAL',970,1640,21,true,'#222','right');L(985,1648,1170,1648,1.3);if(t.s)T(t.t.toFixed(2),1160,1642,24,true,'#0a1a6e','right');
-T("Client's name in full:",78,1530,22);L(285,1536,590,1536,1,'#999');T(d.cn,291,1530,24,false,'#0a1a6e','left',295);
-T('ID Card No:',610,1530,22);L(745,1536,960,1536,1,'#999');T(d.cid,751,1530,24,false,'#0a1a6e','left',205);
+T('SUB TOTAL',990,1540,16,true,'#222');L(985,1548,1170,1548,1.3);if(t.s)T(t.s.toFixed(2),1160,1542,21,false,'#0a1a6e','right',72);
+T('VAT',990,1590,17,true,'#222');L(985,1598,1170,1598,1.3);if(t.s)T(t.v.toFixed(2),1160,1592,21,false,'#0a1a6e','right',118);
+T('TOTAL',990,1640,17,true,'#222');L(985,1648,1170,1648,1.3);if(t.s)T(t.t.toFixed(2),1160,1642,22,true,'#0a1a6e','right',105);
+T("Client's name in full:",78,1530,22);L(285,1536,600,1536,1,'#999');T(d.cn,291,1530,24,false,'#0a1a6e','left',305);
+T('ID Card No:',620,1530,22);L(755,1536,965,1536,1,'#999');T(d.cid,761,1530,24,false,'#0a1a6e','left',200);
 T("Client's Signature:",78,1620,22);L(250,1636,490,1636,1,'#999');
-T('Technician Signature:',510,1620,22);L(745,1636,960,1636,1,'#999');T(d.tech,745,1664,18,false,'#444','left',215);
+T('Technician Signature:',525,1620,22);L(760,1636,965,1636,1,'#999');T(d.tech,760,1664,18,false,'#444','left',205);
 const dg=(im,px,w)=>{if(im){const r=Math.min(w/im.width,80/im.height);x.drawImage(im,px,1636-im.height*r,im.width*r,im.height*r)}};
-dg(i1,250,240);dg(i2,745,215);
+dg(i1,250,240);dg(i2,760,205);
 x.fillStyle=B;x.fillRect(0,1690,1240,64);T(S.brand+' '+S.sub,620,1730,22,true,'#fff','center')}
 async function pdf(d){const c=document.createElement('canvas');c.width=1240;c.height=1754;await draw(d,c);
 const {jsPDF}=window.jspdf,p=new jsPDF({unit:'mm',format:'a4'});p.addImage(c.toDataURL('image/jpeg',.92),'JPEG',0,0,210,297);
