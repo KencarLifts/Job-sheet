@@ -177,7 +177,8 @@ button.d{color:var(--rd)}
 <button id="ssv" type="button">Save settings</button>
 <p class="m" id="sm"></p>
 </div>
-<div class="box" id="usr"><h2>Users and technicians</h2><div id="ul"></div><p class="m">New accounts must be approved here before they can use the app.</p></div>
+<div class="box" id="usr"><h2>Users and technicians</h2><div id="ul"></div><p class="m">New accounts must be approved here before they can use the app. The name must match the technician name on documents (for imported ones).</p>
+<button class="s" id="fxa" type="button">Assign imported documents to technicians by name</button></div>
 </div>
 </div>
 </main>
@@ -346,9 +347,10 @@ $('ssv').onclick=async()=>{const n={};for(const k in SF)n[k]=V(SF[k]);const{next
 $('lgf').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const fr=new FileReader();
  fr.onload=()=>{const i=new Image();i.onload=()=>{const r=Math.min(1,500/i.height),c=document.createElement('canvas');c.width=Math.round(i.width*r);c.height=Math.round(i.height*r);c.getContext('2d').drawImage(i,0,0,c.width,c.height);S.logo=c.toDataURL('image/png');$('lgp').src=S.logo;$('sm').textContent='Logo changed. Press “Save settings” to keep it.'};i.onerror=()=>alert('Could not read this image.');i.src=fr.result};fr.readAsDataURL(f)};
 $('lgr').onclick=()=>{S.logo='';$('lgp').src=DEFAULT_LOGO;$('sm').textContent='Default logo selected. Press “Save settings” to keep it.'};
+$('fxa').onclick=async e=>{e.target.disabled=true;const{data,error}=await sb.rpc('fix_doc_authors');e.target.disabled=false;alert(error?error.message:data+' document(s) assigned to their technicians.')};
 async function loadUsers(){const{data,error}=await sb.from('profiles').select('id,email,full_name,role,approved').order('created_at');
  if(error){$('ul').innerHTML='<p class="m er">'+esc(error.message)+'</p>';return}
- $('ul').innerHTML=data.map(u=>'<div class="ul" data-u="'+u.id+'"><span>'+esc(u.full_name||'')+'<br><small>'+esc(u.email)+'</small></span><select data-f="role"><option'+(u.role=='technician'?' selected':'')+'>technician</option><option'+(u.role=='admin'?' selected':'')+'>admin</option></select><label class="ck" style="margin:0"><input type="checkbox" data-f="approved"'+(u.approved?' checked':'')+(u.id==me.id?' disabled':'')+'>OK</label></div>').join('')}
+ $('ul').innerHTML=data.map(u=>'<div class="ul" data-u="'+u.id+'"><span><input data-f="full_name" placeholder="Full name" value="'+esc(u.full_name||'')+'"><small>'+esc(u.email)+'</small></span><select data-f="role"><option'+(u.role=='technician'?' selected':'')+'>technician</option><option'+(u.role=='admin'?' selected':'')+'>admin</option></select><label class="ck" style="margin:0"><input type="checkbox" data-f="approved"'+(u.approved?' checked':'')+(u.id==me.id?' disabled':'')+'>OK</label></div>').join('')}
 $('ul').onchange=async e=>{const r=e.target.closest('[data-u]');if(!r)return;const f=e.target.dataset.f;
  const v=f=='approved'?e.target.checked:e.target.value;const{error}=await sb.from('profiles').update({[f]:v}).eq('id',r.dataset.u);if(error){alert(error.message);loadUsers()}};
 
@@ -362,7 +364,8 @@ $('ex').onclick=async e=>{e.target.disabled=true;
 $('im').onclick=()=>$('imf').click();
 $('imf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
  try{const j=JSON.parse(await f.text());const a=Array.isArray(j)?j:j.docs;if(!Array.isArray(a))throw new Error('bad');
-  const rows=a.filter(d=>d&&(d.data||d.rows)).map(d=>{const x=d.data||d,no=d.no||x.no;return{no,type:x.type??d.type??0,client:x.client||d.client||'',doc_date:(x.date||d.doc_date)||null,total:tot(x).t,tech:x.tech||'',data:x,updated_at:d.updated_at||new Date().toISOString()}}).filter(r=>r.no);
+  const{data:pr}=await sb.from('profiles').select('id,full_name,email');const mp={};(pr||[]).forEach(p=>{[p.full_name,p.email].forEach(k=>{if(k)mp[k.trim().toLowerCase()]=p.id})});
+  const rows=a.filter(d=>d&&(d.data||d.rows)).map(d=>{const x=d.data||d,no=d.no||x.no;return{no,type:x.type??d.type??0,client:x.client||d.client||'',doc_date:(x.date||d.doc_date)||null,total:tot(x).t,tech:x.tech||'',created_by:mp[(x.tech||'').trim().toLowerCase()]||me.id,data:x,updated_at:d.updated_at||new Date().toISOString()}}).filter(r=>r.no);
   if(!rows.length)throw new Error('No documents found');
   if(!confirm('Import '+rows.length+' document(s)? Documents with the same number will be overwritten.'))return;
   const{error}=await sb.from('documents').upsert(rows,{onConflict:'no'});if(error)throw error;

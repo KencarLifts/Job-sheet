@@ -68,6 +68,27 @@ create policy "settings read" on public.app_settings for select to authenticated
 create policy "settings admin update" on public.app_settings for update to authenticated using (is_admin()) with check (is_admin());
 
 create policy "docs read" on public.documents for select to authenticated using (is_approved());
-create policy "docs insert" on public.documents for insert to authenticated with check (is_approved());
-create policy "docs update" on public.documents for update to authenticated using (is_approved()) with check (is_approved());
+create policy "docs insert" on public.documents for insert to authenticated with check (is_approved() and (created_by=auth.uid() or is_admin()));
+-- only the author or an administrator can edit a saved document
+create policy "docs update" on public.documents for update to authenticated
+  using (is_approved() and (created_by=auth.uid() or is_admin()))
+  with check (is_approved() and (created_by=auth.uid() or is_admin()));
 create policy "docs delete (admin)" on public.documents for delete to authenticated using (is_admin());
+
+-- assign imported documents to technicians by the name written on them (admin button in Settings)
+create or replace function public.fix_doc_authors() returns int language plpgsql security definer set search_path=public as $$
+declare n int;
+begin
+  if not is_admin() then raise exception 'admin only'; end if;
+  with u as (
+    update documents d set created_by=p.id from profiles p
+    where p.approved and btrim(d.tech)<>''
+      and lower(btrim(d.tech)) in (lower(btrim(coalesce(p.full_name,''))), lower(btrim(coalesce(p.email,''))))
+      and d.created_by<>p.id
+      and d.created_by in (select id from profiles where role='admin')
+    returning 1)
+  select count(*) into n from u;
+  return n;
+end $$;
+revoke all on function public.fix_doc_authors() from public, anon;
+grant execute on function public.fix_doc_authors() to authenticated;
