@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Job Sheets</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#153f89">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Job Sheets">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main>
+<h1 id="ttl">Job Sheets</h1>
+
+<div id="cfg" class="top box"><b id="cfgt">Not configured.</b><p class="m" id="cfgm">Open <code>index.html</code> and set your Supabase URL and anon key in the <code>CFG</code> constant (see README).</p></div>
+
+<div id="auth" class="top box">
+<h2>Sign in</h2>
+<div id="nmw" style="display:none"><label>Full name</label><input id="an" autocomplete="name"></div>
+<label>Email</label><input id="ae" type="email" autocomplete="email">
+<label>Password</label><input id="ap" type="password" autocomplete="current-password">
+<button id="ai" type="button">Sign in</button>
+<button class="s" id="asw" type="button">Create an account</button>
+<button class="s" id="afp" type="button">Forgot password?</button>
+<p class="m er" id="am"></p>
+</div>
+
+<div id="rec" class="top box"><h2>Set a new password</h2>
+<label>New password</label><input id="rp1" type="password" autocomplete="new-password">
+<label>Repeat password</label><input id="rp2" type="password" autocomplete="new-password">
+<button id="rpb" type="button">Save password</button><p class="m er" id="rm"></p></div>
+
+<div id="wait" class="top box"><h2>Waiting for approval</h2>
+<p>Your account has been created. An administrator needs to approve it before you can use the app.</p>
+<button id="wr" type="button">Check again</button><button class="s" id="wo" type="button">Sign out</button></div>
+
+<div id="app" class="top">
+<div id="bar"><span id="who"></span><div class="bb"><button class="s" id="inst" type="button" hidden>Install app</button><button class="s" id="so" type="button">Sign out</button></div></div>
+<p class="m er" id="off" hidden>You are offline. Data cannot be saved until the connection returns.</p>
+<nav><button data-v="list" class="on">Documents</button><button data-v="new">+ New</button><button data-v="set" id="nset">Settings</button></nav>
+
+<div id="list" class="v on">
+<input id="q" type="search" placeholder="Search by client or number">
+<p class="m" id="exf" style="display:none"></p>
+<div class="ab" id="exim" style="margin:10px 0">
+<button class="s" id="ex" type="button">Export…</button>
+<button class="s" id="im" type="button">Import</button>
+<input id="imf" type="file" accept=".json,application/json" hidden>
+</div>
+<div id="docs"></div>
+</div>
+
+<div id="exp" class="v">
+<div class="box">
+<h2>Export documents</h2>
+<input id="eq" type="search" placeholder="Filter by client or number">
+<div class="ab" style="margin:10px 0"><button class="s" id="esa" type="button">Select all</button><button class="s" id="esn" type="button">Select none</button></div>
+<div id="el"></div>
+<button id="edo" type="button">Export selected (0)</button>
+<button class="s" id="ecc" type="button">Cancel</button>
+</div>
+</div>
+
+<div id="edit" class="v">
+
+<div id="s1" class="st on box">
+<h2>Document type</h2>
+<div class="seg">
+<label><input type="radio" name="t" value="0" checked><span>Job Sheet</span></label>
+<label><input type="radio" name="t" value="1"><span>Invoice</span></label>
+<label><input type="radio" name="t" value="2"><span>Cash Sale</span></label>
+</div>
+<div class="g"><div><label>Document No.</label><input id="num" placeholder="Auto (on first save)"></div>
+<div><label>Date</label><input id="date" type="date"></div></div>
+<h2>Client</h2>
+<label>Client</label><input id="client">
+<label>Address</label><textarea id="addr" rows="1" placeholder="Street, Locality, Country"></textarea>
+<div class="g"><div><label>Telephone</label><input id="tel" type="tel"></div>
+<div><label>VAT No</label><input id="vat"></div></div>
+<label>Subject</label><select id="subjsel"></select>
+<textarea id="subj" rows="1" placeholder="Type the subject" style="display:none;margin-top:8px"></textarea>
+<h2>Payment and dates</h2>
+<div class="g"><div><label>Price</label><input id="price"></div>
+<div><label>App. Inst. Date</label><input id="inst" type="date"></div></div>
+<label>Payment</label>
+<div class="seg">
+<label><input type="radio" name="p" value="-1" checked><span>None</span></label>
+<label><input type="radio" name="p" value="0"><span>Warranty</span></label>
+<label><input type="radio" name="p" value="1"><span>Cash</span></label>
+<label><input type="radio" name="p" value="2"><span>Invoice</span></label>
+</div>
+<h2>Job description</h2>
+<div id="rows"></div>
+<button class="s" id="add" type="button">+ Add item</button>
+<p class="m" id="ln"></p>
+<div class="g" style="margin-top:10px"><div><label>VAT %</label><input id="vr" type="number" inputmode="decimal"></div>
+<div class="tot" id="tt" style="align-self:end"></div></div>
+<h2>Materials used</h2>
+<textarea id="mat" rows="3"></textarea>
+<p class="m" id="ml"></p>
+<h2>Time and amount received</h2>
+<div class="g"><div><label>Time In</label><input id="tin" type="time"></div>
+<div><label>Time Out</label><input id="tout" type="time"></div></div>
+<div class="g"><div><label>Amount Received</label><input id="rec"></div>
+<div><label>Payment received by</label>
+<select id="rp"><option value="-1">None</option><option value="0">Cash</option><option value="1">Cheque</option><option value="2">Invoice</option></select></div></div>
+<div class="nav"><button class="s" id="sv1" type="button">Save</button><button id="n1" type="button">Next: signatures →</button></div>
+</div>
+
+<div id="s2" class="st box">
+<h2>Client</h2>
+<div class="lr"><label>Client's name in full</label><label class="cb"><input type="checkbox" id="cnp"><span>Client not present</span></label></div>
+<input id="cn">
+<label>ID Card No</label><input id="cid">
+<label>Client's signature</label>
+<canvas class="pad" id="p1" width="800" height="300"></canvas>
+<button class="s" data-c="p1" type="button">Clear</button>
+<h2>Technician</h2>
+<label>Technician</label><select id="tech"></select>
+<label>Technician's signature</label>
+<canvas class="pad" id="p2" width="800" height="300"></canvas>
+<button class="s" data-c="p2" type="button">Clear</button>
+<div class="nav"><button class="s" id="b2" type="button">← Back</button><button id="n2" type="button">Save and preview →</button></div>
+</div>
+
+<div id="s3" class="st box">
+<canvas id="pv" width="1240" height="1754"></canvas>
+<button id="dl" type="button">Download PDF</button>
+<p class="m" id="msg"></p>
+<div class="nav"><button class="s" id="b3" type="button">← Edit</button><button class="s" id="bl" type="button">All documents</button></div>
+</div>
+</div>
+
+<div id="set" class="v">
+<div class="box">
+<h2>Logo</h2>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><img id="lgp" alt="Logo" style="height:90px;background:#fff;border:1px solid var(--bd);border-radius:8px;padding:4px"><div style="flex:1 1 180px;min-width:0"><input id="lgf" type="file" accept="image/*" hidden><button class="s" id="lgb" type="button" style="margin-top:0">Change logo</button><button class="s" id="lgr" type="button">Use default logo</button></div></div>
+<p class="m">The logo is shown in the top left corner of the PDF. Press “Save settings” after changing it.</p>
+<h2>Company</h2>
+<div class="g"><div><label>Header text</label><input id="st_brand"></div><div><label>Header subtitle</label><input id="st_sub"></div></div>
+<label>Company name</label><input id="st_name">
+<label>Address</label><input id="st_addr">
+<div class="g"><div><label>Tel/Fax</label><input id="st_tel"></div><div><label>Mobile</label><input id="st_mob"></div></div>
+<div class="g"><div><label>Email</label><input id="st_email"></div><div><label>Web</label><input id="st_web"></div></div>
+<div class="g"><div><label>VAT Reg No</label><input id="st_vatno"></div><div><label>Default VAT %</label><input id="st_vat" type="number" inputmode="decimal"></div></div>
+<h2>Subject presets</h2>
+<label>One per line – shown in the Subject drop-down</label><textarea id="st_subjects" rows="6" style="overflow:auto;resize:vertical"></textarea>
+<h2>Numbering</h2>
+<div class="g"><div><label>Next number</label><input id="st_next" type="number" inputmode="numeric"></div><div><label>Suffix (e.g. A)</label><input id="st_suf"></div></div>
+<button id="ssv" type="button">Save settings</button>
+<p class="m" id="sm"></p>
+</div>
+<div class="box" id="usr"><h2>Users and technicians</h2><div id="ul"></div><p class="m">New accounts must be approved here before they can use the app.</p></div>
+</div>
+</div>
+</main>
+<script src="vendor/supabase.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

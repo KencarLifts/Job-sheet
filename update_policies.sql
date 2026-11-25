@@ -1,0 +1,1 @@
+-- Obsolete: superseded by restrict_access.sql (run that file instead).

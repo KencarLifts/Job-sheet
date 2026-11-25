@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM embed example</title>
+<style>body{font-family:system-ui,sans-serif;max-width:900px;margin:20px auto;padding:0 12px}button{padding:10px 14px;margin:0 6px 8px 0}pre{background:#f3f3f3;padding:8px;overflow:auto;max-height:140px}</style></head>
+<body>
+<h1>CRM page (example)</h1>
+<p>Customer: <b>ACME Ltd</b> (CRM id <code>CUST-123</code>)</p>
+<button id="n">New job sheet for this customer</button><button id="l">Show this customer's documents</button>
+<div id="box"></div><pre id="log"></pre>
+<script src="embed.js"></script>
+<script>
+// 1) put the CRM origin (e.g. https://crm.example.com) into allowedOrigins in config.js of the app
+// 2) set url to wherever the app is hosted (a relative './' only works if both are on the same site)
+var log=function(t,m){document.getElementById('log').textContent+=t+' '+JSON.stringify(m)+'\n'};
+var js=JobSheets.mount({
+  container:'#box', url:'./', ext:'CUST-123',
+  // optional single sign-on: return the Supabase session of the logged in user
+  // session:()=>({access_token:'...',refresh_token:'...'}),
+  onReady:function(m){log('ready',m.user)}, onSaved:function(m){log('saved',m)},
+  onAuthRequired:function(){log('auth-required',{})}, onError:function(m){log('error',m)}
+});
+document.getElementById('n').onclick=function(){js.newDocument({client:'ACME Ltd',addr:'1 Main St, Luqa',tel:'99123456',vat:'MT12345678',ext:'CUST-123'})};
+document.getElementById('l').onclick=function(){js.search('','CUST-123')};
+</script></body></html>

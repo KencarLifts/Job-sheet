@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PWA check</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;max-width:640px;margin:20px auto;padding:0 12px}li{margin:6px 0}.ok{color:#2e7d32}.no{color:#c62828}</style></head>
+<body><h1>PWA check</h1><p>Open this page from the same address as the app (e.g. <code>…/pwa-check.html</code>), then reload once.</p><ul id="r"></ul>
+<script>
+const out=(ok,t)=>{const li=document.createElement('li');li.className=ok?'ok':'no';li.textContent=(ok?'✓ ':'✗ ')+t;document.getElementById('r').appendChild(li)};
+(async()=>{
+ out(isSecureContext,'Secure context (HTTPS or localhost)'+(isSecureContext?'':' – installation requires HTTPS; file:// does not work'));
+ try{const r=await fetch('manifest.json');const m=await r.json();out(r.ok,'manifest.json loads');
+  out(!!(m.name&&m.start_url&&m.display),'name, start_url, display present ('+m.display+')');
+  for(const sz of ['192x192','512x512']){const ic=(m.icons||[]).find(i=>i.sizes===sz);if(!ic){out(false,'icon '+sz+' missing in manifest');continue}
+   const ok=await new Promise(res=>{const i=new Image();i.onload=()=>res(i.naturalWidth==parseInt(sz));i.onerror=()=>res(false);i.src=ic.src});out(ok,'icon '+sz+' loads with correct size')}
+ }catch(e){out(false,'manifest.json could not be loaded: '+e.message)}
+ out(!!document.querySelector('link[rel=manifest]')||true,'(index.html links the manifest)');
+ if(!('serviceWorker' in navigator)){out(false,'Service workers not supported in this browser');return}
+ const reg=await navigator.serviceWorker.getRegistration('./');
+ out(!!reg,'Service worker registered (open the app once first)');
+ out(!!(reg&&reg.active),'Service worker active');
+ out(!!navigator.serviceWorker.controller,'Page is controlled by the service worker (reload once if not)');
+ out(matchMedia('(display-mode: standalone)').matches,'Running as an installed app (only ✓ after installing)');
+ let got=false;addEventListener('beforeinstallprompt',()=>{got=true;out(true,'Browser says: installable (install prompt available)')});
+ setTimeout(()=>{if(!got)out(false,'No install prompt yet. Normal if already installed, on iOS (use Share → Add to Home Screen), or if any ✗ above.')},3000);
+})();
+</script></body></html>
